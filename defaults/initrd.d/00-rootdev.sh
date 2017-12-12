@@ -95,16 +95,30 @@ _rootdev_mount() {
     local mopts="${mount_opts}"
     [ -n "${REAL_ROOTFLAGS}" ] && \
         mopts="${mopts},${REAL_ROOTFLAGS}"
-    good_msg "Using mount opts: -o ${mopts}"
+    #good_msg "Using mount opts: -o ${mopts}"
 
-    mount -t "${mount_fstype}" -o "${mopts}" \
-        "${REAL_ROOT}" "${NEW_ROOT}" && return 0
+    if is_zfs_fstype "${fstype}"; then
+        # Mount all ZFS mountpoints in the root zpool.
+        # This will make the end result behave as if something like
+        # "zpool import ... ${ZFS_POOL}"
+        # were called, as opposed to the
+        # "zpool import -N ... ${ZFS_POOL}" statement that is executed
+        # in zfs_start_volumes().
+        good_msg "Mounting root with: zfs mount -o ""${mopts}"" -a"
+        zfs mount -o "${mopts}" -a && return 0
+        bad_msg "Mounting ZFS mountpoints failed."
+    else
+        good_msg "Mounting root with: mount -t ""${mount_fstype}"" " \
+            "-o ""${mopts}"" ""${REAL_ROOT}"" ""${NEW_ROOT}"""
+        mount -t "${mount_fstype}" -o "${mopts}" \
+            "${REAL_ROOT}" "${NEW_ROOT}" && return 0
 
-    bad_msg "Cannot mount ${REAL_ROOT}, trying with -t auto"
-    mount -t "auto" -o "${mopts}" \
-        "${REAL_ROOT}" "${NEW_ROOT}" && return 0
+        bad_msg "Cannot mount ${REAL_ROOT}, trying with -t auto"
+        mount -t "auto" -o "${mopts}" \
+            "${REAL_ROOT}" "${NEW_ROOT}" && return 0
 
-    bad_msg "Cannot mount ${REAL_ROOT} with -t auto, giving up"
+        bad_msg "Cannot mount ${REAL_ROOT} with -t auto, giving up"
+    fi
 
     return 1
 }

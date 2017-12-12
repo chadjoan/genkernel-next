@@ -81,7 +81,7 @@ zfs_start_volumes() {
     elif [ -z "${ZFS_POOL}" ]; then
         good_msg "Importing ZFS pools"
 
-        zpool import -N -a ${ZPOOL_FORCE}
+        zpool import -N -a -R "${NEW_ROOT}" ${ZPOOL_FORCE}
         if [ "${?}" = "0" ]; then
             good_msg "Importing ZFS pools succeeded"
         else
@@ -96,11 +96,11 @@ zfs_start_volumes() {
             if [ -n "${CRYPT_ROOTS}" ] || [ -n "${CRYPT_SWAPS}" ]; then
                 good_msg "LUKS detected. Reimporting ${ZFS_POOL}"
                 zpool export -f "${ZFS_POOL}"
-                zpool import -N ${ZPOOL_FORCE} "${ZFS_POOL}"
+                zpool import -N -R "${NEW_ROOT}" ${ZPOOL_FORCE} "${ZFS_POOL}"
             fi
         else
             good_msg "Importing ZFS pool ${ZFS_POOL}"
-            zpool import -N ${ZPOOL_FORCE} "${ZFS_POOL}"
+            zpool import -N -R "${NEW_ROOT}" ${ZPOOL_FORCE} "${ZFS_POOL}"
 
             if [ "${?}" = "0" ]; then
                 good_msg "Import of ${ZFS_POOL} succeeded"
