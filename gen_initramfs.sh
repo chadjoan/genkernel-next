@@ -751,14 +751,17 @@ append_ld_so_conf() {
         cd "${tmp_dir}" || gen_die "cannot cd into ${tmp_dir}"
         ldconfig -r "${tmp_dir_ext}" || \
             gen_die "cannot run ldconfig on ${tmp_dir_ext}"
-        cp -a "${tmp_dir_ext}/etc/ld.so.cache" "${tmp_dir}/etc/ld.so.cache" || \
-            gen_die "cannot copy ld.so.cache"
+        if cp -a "${tmp_dir_ext}/etc/ld.so.cache" "${tmp_dir}/etc/ld.so.cache"
+        then
+            cd "${tmp_dir}" || gen_die "cannot cd into ${tmp_dir}"
+            log_future_cpio_content
+            find . -print | cpio ${CPIO_ARGS} --append -F "${CPIO}" \
+                    || gen_die "compressing ld.so.cache cpio"
+        else
+            print_warning 1 "cannot copy ld.so.cache"
+        fi
         rm -rf "${tmp_dir_ext}"
 
-        cd "${tmp_dir}" || gen_die "cannot cd into ${tmp_dir}"
-        log_future_cpio_content
-        find . -print | cpio ${CPIO_ARGS} --append -F "${CPIO}" \
-                || gen_die "compressing ld.so.cache cpio"
         cd "$(dirname "${tmp_dir}")"
         rm -rf "${tmp_dir}"
     fi
