@@ -122,7 +122,7 @@ zfs_rootdev_init() {
     ZFS_POOL="${root_dev%%/*}"
 
     if [ "${root_dev}" != "ZFS" ]; then
-        local ztype=$(zfs get type -o value -H "${root_dev}")
+        local ztype=$(zfs get -o value -H type "${root_dev}")
         if [ "${ztype}" = "filesystem" ]; then
             REAL_ROOT="${root_dev}"
             good_msg "Detected zfs root: ${REAL_ROOT}"
