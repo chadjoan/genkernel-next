@@ -197,7 +197,55 @@ clear_log() {
     fi
 }
 
+gen_nopkgconf_begin() {
+    if [ -e /usr/bin/pkg-config ]; then
+        echo "Backing up and removing pkg{conf,-config}"
+        #echo "<gen_nopkgconf_begin>"
+
+        if [ ! -d /tmp/genkernel-next ]; then
+            #echo "  mkdir /tmp/genkernel-next"
+            mkdir /tmp/genkernel-next
+        fi
+        #echo "  /usr/bin/pkg-config -> /tmp/genkernel-next/pkg-config"
+        mv /usr/bin/pkg-config /tmp/genkernel-next/pkg-config
+        #echo "  /usr/bin/pkgconf    -> /tmp/genkernel-next/pkgconf"
+        mv /usr/bin/pkgconf    /tmp/genkernel-next/pkgconf
+
+        #echo "</gen_nopkgconf_begin>"
+    fi
+}
+
+gen_nopkgconf_end() {
+    if [ -d /tmp/genkernel-next ]; then
+        echo "Restoring /usr/bin/pkg{conf,-config}"
+        #echo "<gen_nopkgconf_end>"
+
+        local test_tmp_pkgconf="/tmp/genkernel-next/pkg-config"
+        local test_usr_pkgconf="/usr/bin/pkg-config"
+        local have_tmp_pkgconf="no"
+        local have_usr_pkgconf="no"
+        if [ -e "$test_tmp_pkgconf" ] || [ -L "$test_tmp_pkgconf" ]; then
+            have_tmp_pkgconf="yes"
+        fi
+        if [ -e "$test_usr_pkgconf" ] || [ -L "$test_usr_pkgconf" ]; then
+            have_usr_pkgconf="yes"
+        fi
+
+        if [ "$have_tmp_pkgconf" == "yes" -a "$have_usr_pkgconf" == "no" ]; then
+            #echo "  /tmp/genkernel-next/pkg-config -> /usr/bin/pkg-config"
+            cp -P /tmp/genkernel-next/pkg-config /usr/bin/pkg-config || "Couldn't copy pkg-config back to its original place."
+            #echo "  /tmp/genkernel-next/pkgconf    -> /usr/bin/pkgconf"
+            cp -P /tmp/genkernel-next/pkgconf    /usr/bin/pkgconf    || "Couldn't copy pkgconf back to its original place."
+        fi
+
+        #echo "</gen_nopkgconf_end>"
+    fi
+}
+
 gen_die() {
+    # Ensure that pkg-config is available if we turned it off.
+    gen_nopkgconf_end
+
     dump_debugcache
 
     if [ "$#" -gt '0' ]

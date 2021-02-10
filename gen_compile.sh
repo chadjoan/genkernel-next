@@ -208,6 +208,8 @@ compile_generic() {
     local target=${1}
     local argstype=${2}
 
+    gen_nopkgconf_begin
+
     case "${argstype}" in
         kernel|kernelruntask)
             export_kernel_args
@@ -257,6 +259,8 @@ compile_generic() {
         kernel) unset_kernel_args ;;
         utils) unset_utils_args ;;
     esac
+
+    gen_nopkgconf_end
 }
 
 compile_modules() {
